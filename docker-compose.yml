@@ -1,0 +1,40 @@
+version: '3.8'
+
+services:
+
+  auth-gateway-service:
+    build: ./auth-gateway-service
+    container_name: periodt-auth-gateway
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./auth-gateway-service:/app
+    networks:
+      - periodt-network
+    restart: unless-stopped
+
+  cycle-wellness-service:
+    build: ./cycle-wellness-service
+    container_name: periodt-cycle-wellness
+    ports:
+      - "8001:8001"
+    volumes:
+      - ./cycle-wellness-service:/app
+    networks:
+      - periodt-network
+    restart: unless-stopped
+
+  analytics-reminder-service:
+    build: ./analytics-reminder-service
+    container_name: periodt-analytics-reminder
+    ports:
+      - "8002:8002"
+    volumes:
+      - ./analytics-reminder-service:/app
+    networks:
+      - periodt-network
+    restart: unless-stopped
+
+networks:
+  periodt-network:
+    driver: bridge
