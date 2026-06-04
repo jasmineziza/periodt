@@ -1,0 +1,13 @@
+version: '3.9'
+
+services:
+
+  analytics-service:
+    build: .
+    ports:
+      - "8002:8002"
+
+    volumes:
+      - .:/app
+
+    restart: always
