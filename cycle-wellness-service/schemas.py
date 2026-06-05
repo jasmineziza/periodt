@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 from datetime import date
-from pydantic import BaseModel
+
 
 class MoodCreate(BaseModel):
     user_id: int
@@ -21,3 +21,23 @@ class CycleResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+class SymptomCreate(BaseModel):
+    user_id: int
+    symptom: str
+    severity: str
+
+class DashboardResponse(BaseModel):
+    user_id: int
+
+    last_period: date | None
+    next_period: date | None
+    ovulation_date: date | None
+
+    cycle_length: int | None
+
+    latest_mood: str | None
+    latest_note: str | None
+
+    latest_symptom: str | None
+    symptom_severity: str | None

@@ -15,16 +15,29 @@ def get_cycles():
     return {"message": "Cycle endpoint working"}
 
 @router.get("/prediction/{user_id}")
-def predict_cycle(user_id: int):
+def predict_cycle(
+    user_id: int,
+    db: Session = Depends(get_db)
+):
+    latest_cycle = (
+        db.query(Cycle)
+        .filter(Cycle.user_id == user_id)
+        .order_by(Cycle.start_date.desc())
+        .first()
+    )
 
-    last_period = date.today()
+    if not latest_cycle:
+        return {
+            "error": "No cycle data found"
+        }
 
-    next_period = last_period + timedelta(days=28)
+    next_period = latest_cycle.start_date + timedelta(days=28)
 
     ovulation_date = next_period - timedelta(days=14)
 
-    return {
+    return {    
         "user_id": user_id,
+        "last_period": latest_cycle.start_date,
         "next_period": next_period,
         "ovulation_date": ovulation_date
     }
@@ -57,3 +70,4 @@ def get_user_cycles(
     ).all()
 
     return cycles
+

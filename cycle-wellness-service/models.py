@@ -21,3 +21,13 @@ class MoodLog(Base):
 
     mood = Column(String)
     note = Column(String)
+
+class SymptomLog(Base):
+    __tablename__ = "symptom_logs"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, nullable=False)
+
+    symptom = Column(String)
+    severity = Column(String)
+
