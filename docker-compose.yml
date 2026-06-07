@@ -17,7 +17,7 @@ services:
     build: ./cycle-wellness-service
     container_name: periodt-cycle-wellness
     ports:
-      - "8001:8001"
+      - "8001:8000"
     volumes:
       - ./cycle-wellness-service:/app
     networks:
@@ -28,7 +28,7 @@ services:
     build: ./analytics-reminder-service
     container_name: periodt-analytics-reminder
     ports:
-      - "8002:8002"
+      - "8002:8000"
     volumes:
       - ./analytics-reminder-service:/app
     networks:
