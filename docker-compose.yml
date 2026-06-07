@@ -9,6 +9,12 @@ services:
       - "8000:8000"
     volumes:
       - ./auth-gateway-service:/app
+    environment:
+      - SECRET_KEY=${SECRET_KEY:-dev-only-secret-change-me}
+      - DATABASE_URL=${DATABASE_URL:-sqlite:///./auth.db}
+      - FRONTEND_ORIGINS=${FRONTEND_ORIGINS:-http://localhost:5173,http://localhost:3000}
+      - CYCLE_SERVICE_URL=http://cycle-wellness-service:8001
+      - ANALYTICS_SERVICE_URL=http://analytics-reminder-service:8002
     networks:
       - periodt-network
     restart: unless-stopped
@@ -31,6 +37,20 @@ services:
       - "8002:8002"
     volumes:
       - ./analytics-reminder-service:/app
+    networks:
+      - periodt-network
+    restart: unless-stopped
+
+  periodt-frontend:
+    build: ./periodt-frontend
+    container_name: periodt-frontend
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./periodt-frontend:/app
+      - /app/node_modules
+    environment:
+      - VITE_API_BASE_URL=${VITE_API_BASE_URL:-http://localhost:8000}
     networks:
       - periodt-network
     restart: unless-stopped

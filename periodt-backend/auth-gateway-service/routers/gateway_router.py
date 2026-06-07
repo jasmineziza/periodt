@@ -1,20 +1,25 @@
+import os
+
 import httpx
-from fastapi import APIRouter, Depends, HTTPException, Request, status
-from fastapi.responses import JSONResponse
+from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi.responses import JSONResponse, Response
 
 from auth import get_current_user
 import models
 
 router = APIRouter(tags=["Gateway"])
 
-CYCLE_SERVICE_URL = "http://cycle-wellness-service:8001"
-ANALYTICS_SERVICE_URL = "http://analytics-reminder-service:8002"
+# URL service hilir diambil dari env (default = nama service di docker-compose).
+CYCLE_SERVICE_URL = os.getenv("CYCLE_SERVICE_URL", "http://cycle-wellness-service:8001")
+ANALYTICS_SERVICE_URL = os.getenv("ANALYTICS_SERVICE_URL", "http://analytics-reminder-service:8002")
 
 
 async def forward(request: Request, target_url: str, user_id: int):
     body = await request.body()
     headers = {
         "Content-Type": request.headers.get("Content-Type", "application/json"),
+        # Service hilir mempercayai header ini sebagai identitas user
+        # (gateway sudah memvalidasi JWT sebelum forward).
         "X-User-ID": str(user_id),
     }
     async with httpx.AsyncClient(timeout=30.0) as client:
@@ -28,11 +33,25 @@ async def forward(request: Request, target_url: str, user_id: int):
             )
         except httpx.ConnectError:
             raise HTTPException(status_code=503, detail="Service tidak dapat dihubungi")
+        except httpx.TimeoutException:
+            raise HTTPException(status_code=504, detail="Service timeout")
 
-    try:
-        return JSONResponse(content=resp.json(), status_code=resp.status_code)
-    except Exception:
-        return JSONResponse(content={"detail": resp.text}, status_code=resp.status_code)
+    # Respons tanpa body (mis. 204 No Content)
+    if resp.status_code == 204 or not resp.content:
+        return Response(status_code=resp.status_code)
+
+    # Teruskan body apa adanya, hormati Content-Type asli dari service hilir
+    content_type = resp.headers.get("Content-Type", "")
+    if content_type.startswith("application/json"):
+        try:
+            return JSONResponse(content=resp.json(), status_code=resp.status_code)
+        except ValueError:
+            pass
+    return Response(
+        content=resp.content,
+        status_code=resp.status_code,
+        media_type=content_type or "application/octet-stream",
+    )
 
 
 @router.api_route("/cycle/{path:path}", methods=["GET", "POST", "PUT", "DELETE", "PATCH"])

@@ -1,3 +1,4 @@
+import os
 from datetime import datetime, timedelta
 from typing import Optional
 
@@ -10,10 +11,11 @@ from sqlalchemy.orm import Session
 from database import get_db
 import models
 
-# Ganti SECRET_KEY dengan string acak yang kuat sebelum production!
-SECRET_KEY = "periodt-super-secret-key-2025-ganti-sebelum-deploy"
-ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_HOURS = 24
+# Konfigurasi diambil dari environment variable (lihat .env.example).
+# JANGAN hardcode secret di production.
+SECRET_KEY = os.getenv("SECRET_KEY", "dev-only-secret-change-me")
+ALGORITHM = os.getenv("JWT_ALGORITHM", "HS256")
+ACCESS_TOKEN_EXPIRE_HOURS = int(os.getenv("ACCESS_TOKEN_EXPIRE_HOURS", "24"))
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
@@ -37,14 +39,14 @@ def decode_token(token: str) -> Optional[int]:
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         user_id = payload.get("sub")
-        return int(user_id) if user_id else None
-    except JWTError:
+        return int(user_id) if user_id is not None else None
+    except (JWTError, ValueError, TypeError):
         return None
 
 
 def get_current_user(
     token: str = Depends(oauth2_scheme),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ) -> models.User:
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,

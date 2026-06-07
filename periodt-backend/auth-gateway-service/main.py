@@ -1,3 +1,5 @@
+import os
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -18,10 +20,17 @@ app = FastAPI(
     version="1.0.0",
 )
 
-# CORS — izinkan frontend React mengakses API ini
+# CORS — daftar origin frontend diambil dari env (pisahkan dengan koma).
+# Default mendukung Vite (5173) dan CRA (3000).
+_origins = os.getenv(
+    "FRONTEND_ORIGINS",
+    "http://localhost:5173,http://localhost:3000",
+)
+allow_origins = [o.strip() for o in _origins.split(",") if o.strip()]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],  # Sesuaikan dengan URL frontend
+    allow_origins=allow_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -39,7 +48,7 @@ async def root():
         "service": "Auth & Gateway Service",
         "version": "1.0.0",
         "status": "running",
-        "docs": "/docs"
+        "docs": "/docs",
     }
 
 
