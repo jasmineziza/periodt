@@ -7,7 +7,6 @@ from database import engine
 import models
 from routers import auth_router, user_router, gateway_router
 
-# Buat tabel di database saat startup
 models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI(
@@ -20,8 +19,6 @@ app = FastAPI(
     version="1.0.0",
 )
 
-# CORS — daftar origin frontend diambil dari env (pisahkan dengan koma).
-# Default mendukung Vite (5173) dan CRA (3000).
 _origins = os.getenv(
     "FRONTEND_ORIGINS",
     "http://localhost:5173,http://localhost:3000",
@@ -36,7 +33,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Daftarkan semua router
 app.include_router(auth_router.router)
 app.include_router(user_router.router)
 app.include_router(gateway_router.router)

@@ -14,7 +14,7 @@ export const useFetchProfile = () => {
   return useQuery({
     queryKey: ["profile"],
     queryFn: fetchProfile,
-    enabled: !!localStorage.getItem("accessToken"), // hanya jalan jika sudah login
+    enabled: !!localStorage.getItem("accessToken"),
     staleTime: 60 * 1000,
     gcTime: 5 * 60 * 1000,
     retry: false,

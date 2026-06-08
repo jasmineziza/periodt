@@ -3,12 +3,12 @@ version: '3.8'
 services:
 
   auth-gateway-service:
-    build: ./auth-gateway-service
+    build: ./periodt-backend/auth-gateway-service
     container_name: periodt-auth-gateway
     ports:
       - "8000:8000"
     volumes:
-      - ./auth-gateway-service:/app
+      - ./periodt-backend/auth-gateway-service:/app
     environment:
       - SECRET_KEY=${SECRET_KEY:-dev-only-secret-change-me}
       - DATABASE_URL=${DATABASE_URL:-sqlite:///./auth.db}
@@ -20,23 +20,25 @@ services:
     restart: unless-stopped
 
   cycle-wellness-service:
-    build: ./cycle-wellness-service
+    build: ./periodt-backend/cycle-wellness-service
     container_name: periodt-cycle-wellness
     ports:
       - "8001:8001"
     volumes:
-      - ./cycle-wellness-service:/app
+      - ./periodt-backend/cycle-wellness-service:/app
     networks:
       - periodt-network
     restart: unless-stopped
 
   analytics-reminder-service:
-    build: ./analytics-reminder-service
+    build: ./periodt-backend/analytics-reminder-service
     container_name: periodt-analytics-reminder
     ports:
       - "8002:8002"
     volumes:
-      - ./analytics-reminder-service:/app
+      - ./periodt-backend/analytics-reminder-service:/app
+    environment:
+      - CYCLE_SERVICE_URL=http://cycle-wellness-service:8001
     networks:
       - periodt-network
     restart: unless-stopped

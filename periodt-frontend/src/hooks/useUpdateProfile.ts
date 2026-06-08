@@ -21,7 +21,6 @@ export const useUpdateProfile = () => {
     mutationKey: ["updateProfile"],
     mutationFn: putProfile,
     onSuccess: () => {
-      // Side-effect yang selalu sama: refresh cache profil (lihat Guide §5).
       queryClient.invalidateQueries({ queryKey: ["profile"] });
     },
   });

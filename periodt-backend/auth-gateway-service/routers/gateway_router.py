@@ -9,17 +9,25 @@ import models
 
 router = APIRouter(tags=["Gateway"])
 
-# URL service hilir diambil dari env (default = nama service di docker-compose).
 CYCLE_SERVICE_URL = os.getenv("CYCLE_SERVICE_URL", "http://cycle-wellness-service:8001")
 ANALYTICS_SERVICE_URL = os.getenv("ANALYTICS_SERVICE_URL", "http://analytics-reminder-service:8002")
+
+SERVICE_ROUTES = {
+    "cycles": CYCLE_SERVICE_URL,
+    "moods": CYCLE_SERVICE_URL,
+    "symptoms": CYCLE_SERVICE_URL,
+    "dashboard": CYCLE_SERVICE_URL,
+    "analytics": ANALYTICS_SERVICE_URL,
+    "reminder": ANALYTICS_SERVICE_URL,
+}
+
+_METHODS = ["GET", "POST", "PUT", "DELETE", "PATCH"]
 
 
 async def forward(request: Request, target_url: str, user_id: int):
     body = await request.body()
     headers = {
         "Content-Type": request.headers.get("Content-Type", "application/json"),
-        # Service hilir mempercayai header ini sebagai identitas user
-        # (gateway sudah memvalidasi JWT sebelum forward).
         "X-User-ID": str(user_id),
     }
     async with httpx.AsyncClient(timeout=30.0) as client:
@@ -36,11 +44,9 @@ async def forward(request: Request, target_url: str, user_id: int):
         except httpx.TimeoutException:
             raise HTTPException(status_code=504, detail="Service timeout")
 
-    # Respons tanpa body (mis. 204 No Content)
     if resp.status_code == 204 or not resp.content:
         return Response(status_code=resp.status_code)
 
-    # Teruskan body apa adanya, hormati Content-Type asli dari service hilir
     content_type = resp.headers.get("Content-Type", "")
     if content_type.startswith("application/json"):
         try:
@@ -54,16 +60,20 @@ async def forward(request: Request, target_url: str, user_id: int):
     )
 
 
-@router.api_route("/cycle/{path:path}", methods=["GET", "POST", "PUT", "DELETE", "PATCH"])
-async def gateway_cycle(path: str, request: Request, current_user: models.User = Depends(get_current_user)):
-    return await forward(request, f"{CYCLE_SERVICE_URL}/cycle/{path}", current_user.id)
+def _make_handler(prefix: str, base_url: str):
+    async def handler(
+        path: str,
+        request: Request,
+        current_user: models.User = Depends(get_current_user),
+    ):
+        return await forward(request, f"{base_url}/{prefix}/{path}", current_user.id)
+
+    return handler
 
 
-@router.api_route("/analytics/{path:path}", methods=["GET", "POST", "PUT", "DELETE", "PATCH"])
-async def gateway_analytics(path: str, request: Request, current_user: models.User = Depends(get_current_user)):
-    return await forward(request, f"{ANALYTICS_SERVICE_URL}/analytics/{path}", current_user.id)
-
-
-@router.api_route("/reminder/{path:path}", methods=["GET", "POST", "PUT", "DELETE", "PATCH"])
-async def gateway_reminder(path: str, request: Request, current_user: models.User = Depends(get_current_user)):
-    return await forward(request, f"{ANALYTICS_SERVICE_URL}/reminder/{path}", current_user.id)
+for _prefix, _base in SERVICE_ROUTES.items():
+    router.add_api_route(
+        f"/{_prefix}/{{path:path}}",
+        _make_handler(_prefix, _base),
+        methods=_METHODS,
+    )

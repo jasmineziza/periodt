@@ -3,10 +3,8 @@ import os
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, declarative_base
 
-# Default: SQLite lokal (auth.db). Untuk production set DATABASE_URL ke PostgreSQL.
 SQLALCHEMY_DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./auth.db")
 
-# check_same_thread hanya diperlukan untuk SQLite.
 connect_args = (
     {"check_same_thread": False}
     if SQLALCHEMY_DATABASE_URL.startswith("sqlite")

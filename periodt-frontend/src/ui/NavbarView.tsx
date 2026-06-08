@@ -16,9 +16,17 @@ export default function NavbarView() {
     logoutMutation.mutate(undefined, { onSuccess: cleanup, onError: cleanup });
   };
 
+  const links = [
+    { label: "Dashboard", onClick: () => navigate("/") },
+    { label: "Siklus", onClick: () => navigate("/cycle") },
+    { label: "Mood & Gejala", onClick: () => navigate("/wellness") },
+    { label: "Pengingat", onClick: () => navigate("/reminders") },
+  ];
+
   return (
     <Navbar
       user={user}
+      links={links}
       onLogout={handleLogout}
       onProfile={() => navigate("/profile")}
       onBrand={() => navigate("/")}

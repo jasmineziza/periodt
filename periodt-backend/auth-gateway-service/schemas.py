@@ -3,7 +3,6 @@ from datetime import date, datetime
 from typing import Optional
 
 
-# ── Auth ──────────────────────────────────────────────────────────────────────
 
 class UserRegister(BaseModel):
     email: EmailStr
@@ -22,7 +21,6 @@ class Token(BaseModel):
     token_type: str = "bearer"
 
 
-# ── User Profile ──────────────────────────────────────────────────────────────
 
 class UserResponse(BaseModel):
     id: int
